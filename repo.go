@@ -27,6 +27,10 @@ func RepoFindBuild(id int) Build {
 
 //this is bad, I don't think it passes race condtions
 func RepoCreateBuild(t Build) Build {
+	if _, err := engine.Insert(&t); err != nil{
+		panic(err)
+	}
+
 	return t
 }
 
