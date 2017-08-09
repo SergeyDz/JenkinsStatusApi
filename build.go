@@ -12,7 +12,7 @@ type Build struct {
 	BuildDuration 		string    `json:"duration" xorm:"BuildDuration"`
 	BranchName			string    `json:"branchname" xorm:"BranchName"`
 	RepositoryName      string    `json:"repositoryname" xorm:"RepositoryName"`
-	RepositoryUrl       string    `json:"repositoryurl" xorm:"RepositoryName"`
+	RepositoryUrl       string    `json:"repositoryurl" xorm:"RepositoryUrl"`
 	Status				string 	  `json:"status" xorm:"Status"`
 	CreatedOn       	time.Time `json:"createdon" xorm:"CreatedOn"`
 	TriggedBy			string 	  `json:"triggedby" xorm:"TriggedBy"`
