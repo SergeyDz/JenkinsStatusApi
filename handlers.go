@@ -97,7 +97,7 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func allowCORS(w http.ResponseWriter){
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token")
+	//w.Header().Set("Access-Control-Allow-Origin", "*")
+	//w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+	//w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token")
 }
