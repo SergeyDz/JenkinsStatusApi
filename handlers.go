@@ -17,7 +17,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 func BuildIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	allowCORS(w)
 	w.WriteHeader(http.StatusOK)
 	var builds = RepoShowAllBuilds()
 	if err := json.NewEncoder(w).Encode(builds); err != nil {
@@ -35,7 +35,7 @@ func BuildShow(w http.ResponseWriter, r *http.Request) {
 	Build := RepoFindBuild(BuildId)
 	if Build.Id > 0 {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		allowCORS(w)
 
 		w.WriteHeader(http.StatusOK)
 		if err := json.NewEncoder(w).Encode(Build); err != nil {
@@ -46,7 +46,7 @@ func BuildShow(w http.ResponseWriter, r *http.Request) {
 
 	// If we didn't find it, 404
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	allowCORS(w)
 	w.WriteHeader(http.StatusNotFound)
 	if err := json.NewEncoder(w).Encode(jsonErr{Code: http.StatusNotFound, Text: "Not Found"}); err != nil {
 		panic(err)
@@ -71,7 +71,7 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.Unmarshal(body, &Build); err != nil {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		allowCORS(w)
 		w.WriteHeader(422) // unprocessable entity
 		if err := json.NewEncoder(w).Encode(err); err != nil {
 			panic(err)
@@ -80,9 +80,15 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 
 	t := RepoCreateBuild(Build)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	allowCORS(w)
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(t); err != nil {
 		panic(err)
 	}
+}
+
+func allowCORS(w http.ResponseWriter){
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token")
 }

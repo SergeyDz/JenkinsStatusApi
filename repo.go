@@ -36,7 +36,7 @@ func RepoCreateBuild(t Build) Build {
 
 func RepoShowAllBuilds() Builds{
 	builds := make([]Build, 0)
-	var err = engine.Find(&builds)
+	var err = engine.Desc("Id").Limit(500).Find(&builds)
 	if err != nil {
 		fmt.Println(err)
 	}
