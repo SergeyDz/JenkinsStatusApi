@@ -65,12 +65,6 @@ func BuildShow(w http.ResponseWriter, r *http.Request) {
 
 }
 
-/*
-Test with this curl command:
-
-curl -H "Content-Type: application/json" -d '{"name":"New Build"}' http://localhost:8080/Builds
-
-*/
 func BuildCreate(w http.ResponseWriter, r *http.Request) {
 	var Build Build
 
