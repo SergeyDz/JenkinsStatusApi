@@ -26,6 +26,16 @@ func BuildIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func RepositoryIndex(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	allowCORS(w)
+	w.WriteHeader(http.StatusOK)
+	var builds = RepoShowAllRepos()
+	if err := json.NewEncoder(w).Encode(builds); err != nil {
+		panic(err)
+	}
+}
+
 func BuildShow(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	var BuildId int

@@ -36,4 +36,10 @@ var routes = Routes{
 		"/build/{id}",
 		BuildShow,
 	},
+	Route{
+		"RepositoryIndex",
+		"GET",
+		"/repositories",
+		RepositoryIndex,
+	},
 }

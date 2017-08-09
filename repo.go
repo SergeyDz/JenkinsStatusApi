@@ -30,6 +30,19 @@ func RepoCreateBuild(t Build) Build {
 	if _, err := engine.Insert(&t); err != nil{
 		panic(err)
 	}
+	var repository Repository
+
+	has, err := engine.Where("Name = ?", t.RepositoryName).Desc("Id").Get(&repository)
+
+	if(err != nil){
+		panic(err)
+	}
+
+	if(has)	{
+		engine.Update(&Repository{ Name:t.RepositoryName, Url:t.RepositoryUrl, Status: t.Status }, &Repository{Name:t.RepositoryName})
+	} else {
+		engine.Insert(&Repository{ Name:t.RepositoryName, Url:t.RepositoryUrl, Status: t.Status })
+	}
 
 	return t
 }
@@ -43,5 +56,15 @@ func RepoShowAllBuilds() Builds{
 
 	fmt.Println(builds)
 	return builds
+}
+
+func RepoShowAllRepos() Repositories{
+	repos := make([]Repository, 0)
+	var err = engine.Desc("Id").Limit(500).Find(&repos)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return repos
 }
 
