@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"regexp"
 
 	"github.com/gorilla/mux"
 )
@@ -62,6 +63,7 @@ curl -H "Content-Type: application/json" -d '{"name":"New Build"}' http://localh
 */
 func BuildCreate(w http.ResponseWriter, r *http.Request) {
 	var Build Build
+
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		panic(err)
@@ -77,6 +79,9 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
+
+	re := regexp.MustCompile("([^/]+)\\.git$")
+	Build.RepositoryName = re.FindString(Build.RepositoryUrl)
 
 	t := RepoCreateBuild(Build)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
