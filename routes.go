@@ -25,6 +25,12 @@ var routes = Routes{
 		BuildIndex,
 	},
 	Route{
+		"BuildIndexCors",
+		"OPTIONS",
+		"/builds",
+		BuildIndex,
+	},
+	Route{
 		"BuildCreate",
 		"POST",
 		"/build",
@@ -36,9 +42,17 @@ var routes = Routes{
 		"/build/{id}",
 		BuildShow,
 	},
+
 	Route{
 		"RepositoryIndex",
 		"GET",
+		"/repositories",
+		RepositoryIndex,
+	},
+
+	Route{
+		"RepositoryIndexCORS",
+		"OPTIONS",
 		"/repositories",
 		RepositoryIndex,
 	},
