@@ -60,7 +60,7 @@ func RepoShowAllBuilds() Builds{
 
 func RepoShowAllRepos() Repositories{
 	repos := make([]Repository, 0)
-	var err = engine.Desc("Id").Limit(500).Find(&repos)
+	var err = engine.Asc("Name").Limit(500).Find(&repos)
 	if err != nil {
 		fmt.Println(err)
 	}

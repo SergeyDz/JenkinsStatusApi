@@ -10,6 +10,7 @@ import (
 	"regexp"
 
 	"github.com/gorilla/mux"
+	"strings"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +87,7 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 
 	re := regexp.MustCompile("([^/]+)\\.git$")
 	Build.RepositoryName = re.FindString(Build.RepositoryUrl)
+	Build.RepositoryName = strings.Replace(Build.RepositoryName, ".git", "", -1)
 
 	t := RepoCreateBuild(Build)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
