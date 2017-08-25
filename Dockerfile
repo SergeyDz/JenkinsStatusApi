@@ -1,4 +1,4 @@
-FROM iron/go:dev
+FROM golang:1.8
 WORKDIR /app
 ENV MYSQL_CONNECTION=user:password@tcp(sonar.paas.sbtech.com:3306)/build?charset=utf8
 EXPOSE 8080
