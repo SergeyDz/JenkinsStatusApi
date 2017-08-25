@@ -18,7 +18,7 @@ func init() {
 		panic(err)
 	}
 
-	engine.ShowSQL(true)
+	//engine.ShowSQL(true)
 }
 
 func RepoFindBuild(id int) Build {
@@ -60,7 +60,7 @@ func RepoShowAllBuilds() Builds{
 
 func RepoShowAllRepos() Repositories{
 	repos := make([]Repository, 0)
-	var err = engine.Asc("Name").Limit(500).Find(&repos)
+	var err = engine.Asc("Status").Asc("Name").Limit(500).Find(&repos)
 	if err != nil {
 		fmt.Println(err)
 	}
