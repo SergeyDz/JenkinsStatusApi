@@ -18,10 +18,21 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func BuildIndex(w http.ResponseWriter, r *http.Request) {
+	var pageSize int = 50
+	var err error
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	allowCORS(w)
 	w.WriteHeader(http.StatusOK)
-	var builds = RepoShowAllBuilds()
+	
+	size := r.URL.Query().Get("size")
+	if size != ""{
+		if pageSize, err = strconv.Atoi(size); err != nil {
+			panic(err)
+		}
+	}
+
+	var builds = RepoShowAllBuilds(pageSize)
 	if err := json.NewEncoder(w).Encode(builds); err != nil {
 		panic(err)
 	}

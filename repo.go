@@ -47,14 +47,12 @@ func RepoCreateBuild(t Build) Build {
 	return t
 }
 
-func RepoShowAllBuilds() Builds{
+func RepoShowAllBuilds(size int) Builds{
 	builds := make([]Build, 0)
-	var err = engine.Desc("Id").Limit(500).Find(&builds)
+	var err = engine.Desc("Id").Limit(size).Find(&builds)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	fmt.Println(builds)
 	return builds
 }
 
