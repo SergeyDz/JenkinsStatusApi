@@ -56,4 +56,11 @@ var routes = Routes{
 		"/repositories",
 		RepositoryIndex,
 	},
+
+	Route{
+		"GoogleCloudInstances",
+		"GET",
+		"/instances",
+		GCInstances,
+	},
 }

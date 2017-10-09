@@ -11,6 +11,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"strings"
+
+	// MORE ABOUT GCInstances HERE https://github.com/minimum2scp/geco/blob/master/commands.go
+	"golang.org/x/net/context"
+	"golang.org/x/oauth2/google"
+	compute "google.golang.org/api/compute/v1"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +113,55 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+func GCInstances(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var res []Instance
+	var instances []*compute.Instance
+
+	project := "sbtech-pop-poc" // Update Project name
+
+	ctx := context.Background()
+	c, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
+	if err != nil {
+		panic(err)
+	}
+	computeService, err := compute.New(c)
+	if err != nil {
+		panic(err)
+	}
+	aggregatedListCall := computeService.Instances.AggregatedList(project)
+	for {
+		res, err := aggregatedListCall.Do()
+		if err != nil {
+			panic(err)
+			return
+		}
+		for _, instancesScopedList := range res.Items {
+			instances = append(instances, instancesScopedList.Instances...)
+		}
+		if res.NextPageToken != "" {
+			fmt.Fprint(w, "loading more instances with nextPageToken in %s ...", project)
+			aggregatedListCall.PageToken(res.NextPageToken)
+		} else {
+			break
+		}
+	}
+	for _, ins := range instances {
+		zone := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.Zone, "/"))
+		machineType := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.MachineType, "/"))
+		internalIP := ins.NetworkInterfaces[0].NetworkIP
+		externalIP := ins.NetworkInterfaces[0].AccessConfigs[0].NatIP
+		ins_id := strings.Split(ins.Name, "-")[0]
+		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status})
+	}
+	allowCORS(w)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		panic(err)
+	}
+}
+
 
 func allowCORS(w http.ResponseWriter){
 	w.Header().Set("Access-Control-Allow-Origin", "*")
