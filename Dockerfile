@@ -4,6 +4,7 @@ ENV MYSQL_CONNECTION=user:password@tcp(sonar.paas.sbtech.com:3306)/build?charset
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/gc_cloud.json
 EXPOSE 8080
 COPY . /app
+RUN mkdir -p /var/cfg
 RUN go get github.com/go-sql-driver/mysql
 RUN go get github.com/go-xorm/xorm
 RUN go get github.com/gorilla/mux
