@@ -3,6 +3,7 @@ WORKDIR /app
 ENV MYSQL_CONNECTION=user:password@tcp(sonar.paas.sbtech.com:3306)/build?charset=utf8
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/gc_cloud.json
 EXPOSE 8080
+VOLUME ["/var/cfg"]
 COPY . /app
 RUN mkdir -p /var/cfg
 RUN go get github.com/go-sql-driver/mysql
