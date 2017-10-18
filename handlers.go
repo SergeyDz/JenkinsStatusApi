@@ -15,7 +15,7 @@ import (
 	// MORE ABOUT GCInstances HERE https://github.com/minimum2scp/geco/blob/master/commands.go
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
-	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/compute/v1"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +29,9 @@ func BuildIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	allowCORS(w)
 	w.WriteHeader(http.StatusOK)
-	
+
 	size := r.URL.Query().Get("size")
-	if size != ""{
+	if size != "" {
 		if pageSize, err = strconv.Atoi(size); err != nil {
 			panic(err)
 		}
@@ -117,6 +117,8 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 func GCInstances(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var res []Instance
+	var jenlist []string
+	var jenstat bool = false
 	var instances []*compute.Instance
 
 	project := "sbtech-pop-poc" // Update Project name
@@ -147,13 +149,19 @@ func GCInstances(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	jenlist = GCBuildStatus()
 	for _, ins := range instances {
 		zone := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.Zone, "/"))
 		machineType := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.MachineType, "/"))
 		internalIP := ins.NetworkInterfaces[0].NetworkIP
 		externalIP := ins.NetworkInterfaces[0].AccessConfigs[0].NatIP
 		ins_id := strings.Split(ins.Name, "-")[0]
-		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status})
+		if stringInSlice(ins_id, jenlist) {
+			jenstat = true
+		} else {
+			jenstat = false
+		}
+		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status, JENSTAT: strconv.FormatBool(jenstat)})
 	}
 	allowCORS(w)
 	w.WriteHeader(http.StatusOK)
@@ -162,8 +170,45 @@ func GCInstances(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func stringInSlice(str string, list []string) bool {
+	for _, v := range list {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
 
-func allowCORS(w http.ResponseWriter){
+func GCBuildStatus() []string {
+	var client http.Client
+	var jobs JenkinsBuilds
+	var list []string
+
+	req, err := http.NewRequest("GET", "http://jenkins.paas.sbtech.com:8080/job/Common/job/Create_application_terraform_poc_test/api/json?tree=builds[id,result,fullDisplayName,building,actions[parameters[name,value]]]", nil)
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err.Error())
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err.Error())
+	}
+	json.Unmarshal(body, &jobs)
+	for _, val := range jobs.Builds {
+		if val.Building {
+			for _, u := range val.Actions[0].Parameters {
+				if u.Name == "env_name" {
+					if !stringInSlice(u.Value, list) {
+						list = append(list, u.Value)
+					}
+				}
+			}
+		}
+	}
+	return list
+}
+
+func allowCORS(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token, X-XSRF-TOKEN")
