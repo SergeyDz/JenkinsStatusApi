@@ -16,6 +16,9 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/compute/v1"
+	"time"
+	"net"
+	"os"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +118,6 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func GCInstances(w http.ResponseWriter, r *http.Request) {
-	var err error
 	var res []Instance
 	var jenlist []string
 	var jenstat bool = false
@@ -183,8 +185,8 @@ func GCBuildStatus() []string {
 	var client http.Client
 	var jobs JenkinsBuilds
 	var list []string
-
 	req, err := http.NewRequest("GET", "http://jenkins.paas.sbtech.com:8080/job/Common/job/Create_application_terraform_poc_test/api/json?tree=builds[id,result,fullDisplayName,building,actions[parameters[name,value]]]", nil)
+	req.Header.Add("Authorization", "Basic "+ os.Getenv("Jenkins64base"))
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err.Error())
@@ -206,6 +208,51 @@ func GCBuildStatus() []string {
 		}
 	}
 	return list
+}
+
+func Ping(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	hostName := vars["url"]
+	portNum := vars["port"]
+	typ := vars["type"]
+	seconds, _ := strconv.Atoi(vars["timeout"])
+	timeOut := time.Duration(seconds) * time.Second
+
+	start := time.Now()
+	if typ == "http" {
+		httpClient := http.Client{
+			Timeout: timeOut,
+		}
+		resp, err := httpClient.Get("http://" + hostName + ":" + portNum)
+		if (err != nil || resp == nil) {
+			allowCORS(w)
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode("0"); err != nil {
+				panic(err)
+			}
+			return
+		}
+		defer resp.Body.Close()
+	} else {
+		conn, err := net.DialTimeout("tcp", hostName+":"+portNum, timeOut)
+		if err != nil {
+			allowCORS(w)
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode("0"); err != nil {
+				panic(err)
+			}
+			return
+		}
+		conn.Close()
+	}
+	elapsed := time.Since(start)
+	ping := elapsed.Nanoseconds() / int64(time.Millisecond)
+	allowCORS(w)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(ping); err != nil {
+		panic(err)
+	}
+
 }
 
 func allowCORS(w http.ResponseWriter) {

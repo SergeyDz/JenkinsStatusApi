@@ -63,4 +63,11 @@ var routes = Routes{
 		"/instances",
 		GCInstances,
 	},
+
+	Route{
+		"Ping",
+		"GET",
+		"/instances/{url}/{port}/{type}/{timeout}",
+		Ping,
+	},
 }
