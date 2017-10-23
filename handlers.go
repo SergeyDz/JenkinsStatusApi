@@ -218,6 +218,9 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 	seconds, _ := strconv.Atoi(vars["timeout"])
 	timeOut := time.Duration(seconds) * time.Second
 
+	allowCORS(w)
+	w.WriteHeader(http.StatusOK)
+
 	start := time.Now()
 	if typ == "http" {
 		httpClient := http.Client{
@@ -225,8 +228,6 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 		}
 		resp, err := httpClient.Get("http://" + hostName + ":" + portNum)
 		if (err != nil || resp == nil) {
-			allowCORS(w)
-			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode("0"); err != nil {
 				panic(err)
 			}
@@ -236,8 +237,6 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 	} else {
 		conn, err := net.DialTimeout("tcp", hostName+":"+portNum, timeOut)
 		if err != nil {
-			allowCORS(w)
-			w.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(w).Encode("0"); err != nil {
 				panic(err)
 			}
@@ -247,8 +246,6 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 	}
 	elapsed := time.Since(start)
 	ping := elapsed.Nanoseconds() / int64(time.Millisecond)
-	allowCORS(w)
-	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(ping); err != nil {
 		panic(err)
 	}
