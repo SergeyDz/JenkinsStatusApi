@@ -56,4 +56,18 @@ var routes = Routes{
 		"/repositories",
 		RepositoryIndex,
 	},
+
+	Route{
+		"GoogleCloudInstances",
+		"GET",
+		"/instances",
+		GCInstances,
+	},
+
+	Route{
+		"Ping",
+		"GET",
+		"/instances/{url}/{port}/{type}/{timeout}",
+		Ping,
+	},
 }
