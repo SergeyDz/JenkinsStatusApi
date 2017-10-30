@@ -70,4 +70,12 @@ var routes = Routes{
 		"/instances/{url}/{port}/{type}/{timeout}",
 		Ping,
 	},
+
+	Route{
+		"JenkinsJobs",
+		"GET",
+		"/jekinsjobs",
+		JenkinsJobs,
+	},
+
 }
