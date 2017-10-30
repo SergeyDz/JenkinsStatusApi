@@ -174,7 +174,11 @@ func GCInstances(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status, JENBUILD: jenstat})
+		ostype := "unknown"
+		for _, inmeta := range ins.Metadata.Items {
+			ostype = strings.Split(inmeta.Key, "-")[0]
+		}
+		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, OS: ostype, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status, JENBUILD: jenstat})
 	}
 	allowCORS(w)
 	w.WriteHeader(http.StatusOK)

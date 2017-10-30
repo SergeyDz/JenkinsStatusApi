@@ -5,6 +5,7 @@ type Instance struct {
 	NAME         string `json:"NAME"`
 	ZONE         string `json:"ZONE" xorm:"ZONE"`
 	MACHINE_TYPE string `json:"MACHINE_TYPE" xorm:"MACHINE_TYPE"`
+	OS           string `json:"OS"`
 	INTERNAL_IP  string `json:"INTERNAL_IP" xorm:"INTERNAL_IP"`
 	EXTERNAL_IP  string `json:"EXTERNAL_IP" xorm:"EXTERNAL_IP"`
 	STATUS       string `json:"STATUS" xorm:"STATUS"`
@@ -28,7 +29,7 @@ type JenkinsBuilds struct {
 
 type JenkinsJob struct {
 	Timestamp   string `json:"Timestamp"`
-	Building    bool `json:"Building"`
+	Building    bool   `json:"Building"`
 	Result      string `json:"Result" xorm:"RESULT"`
 	DisplayName string `json:"DisplayName" xorm:"DISPLAYNAME"`
 	URL         string `json:"URL" xorm:"URL"`
@@ -38,24 +39,24 @@ type JenkinsJob struct {
 type AppTerraformPOC struct {
 	Builds []struct {
 		Actions []struct {
-			Class  string `json:"_class,omitempty"`
+			Class string `json:"_class,omitempty"`
 			Causes []struct {
 				Class         string `json:"_class"`
 				UpstreamBuild int    `json:"upstreamBuild"`
 				UpstreamURL   string `json:"upstreamUrl"`
 			} `json:"causes,omitempty"`
 		} `json:"actions"`
-		Building    bool        `json:"building"`
-		DisplayName string      `json:"displayName"`
+		Building    bool   `json:"building"`
+		DisplayName string `json:"displayName"`
 		Result      string `json:"result"`
-		Timestamp   int64       `json:"timestamp"`
-		URL         string      `json:"url"`
+		Timestamp   int64  `json:"timestamp"`
+		URL         string `json:"url"`
 	} `json:"builds"`
 }
 
 type BuilsArtifacrtPOP struct {
 	Actions []struct {
-		Class  string `json:"_class,omitempty"`
+		Class string `json:"_class,omitempty"`
 		Causes []struct {
 			Class         string `json:"_class"`
 			UpstreamBuild int    `json:"upstreamBuild"`
@@ -66,7 +67,7 @@ type BuilsArtifacrtPOP struct {
 
 type CloudEnvPOC struct {
 	Actions []struct {
-		Class  string `json:"_class,omitempty"`
+		Class string `json:"_class,omitempty"`
 		Causes []struct {
 			Class    string `json:"_class"`
 			UserName string `json:"userName"`
