@@ -119,11 +119,14 @@ func BuildCreate(w http.ResponseWriter, r *http.Request) {
 
 func GCInstances(w http.ResponseWriter, r *http.Request) {
 	var res []Instance
-	var jenlist []string
-	var jenstat bool = false
+	var ign_list []string
 	var instances []*compute.Instance
 
 	project := "sbtech-pop-poc" // Update Project name
+	ign := strings.Split(os.Getenv("IgnorEnv"), ",")
+	for x := range ign {
+		ign_list = append(ign_list, ign[x])
+	}
 
 	ctx := context.Background()
 	c, err := google.DefaultClient(ctx, compute.CloudPlatformScope)
@@ -151,19 +154,27 @@ func GCInstances(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	jenlist = GCBuildStatus()
+	jenlist := GCBuildStatus()
 	for _, ins := range instances {
+		ins_id := strings.Split(ins.Name, "-")[0]
+		if stringInSlice(ins_id, ign_list) {
+			continue
+		}
 		zone := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.Zone, "/"))
 		machineType := (func(a []string) string { return a[len(a)-1] })(strings.Split(ins.MachineType, "/"))
 		internalIP := ins.NetworkInterfaces[0].NetworkIP
 		externalIP := ins.NetworkInterfaces[0].AccessConfigs[0].NatIP
-		ins_id := strings.Split(ins.Name, "-")[0]
-		if stringInSlice(ins_id, jenlist) {
-			jenstat = true
-		} else {
-			jenstat = false
+
+		inst_app := strings.Split(ins.Name, "-")
+		jenstat := "false"
+		for i := range jenlist {
+			jen_el := strings.Split(jenlist[i], ";")
+			if (jen_el[0] == ins_id) && (jen_el[1] == inst_app[len(inst_app)-1]) {
+				jenstat = jen_el[2]
+				break
+			}
 		}
-		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status, JENSTAT: strconv.FormatBool(jenstat)})
+		res = append(res, Instance{ID: ins_id, NAME: ins.Name, ZONE: zone, MACHINE_TYPE: machineType, INTERNAL_IP: internalIP, EXTERNAL_IP: externalIP, STATUS: ins.Status, JENBUILD: jenstat})
 	}
 	allowCORS(w)
 	w.WriteHeader(http.StatusOK)
@@ -182,26 +193,19 @@ func stringInSlice(str string, list []string) bool {
 }
 
 func GCBuildStatus() []string {
-	var client http.Client
 	var jobs JenkinsBuilds
 	var list []string
-	req, err := http.NewRequest("GET", "http://jenkins.paas.sbtech.com:8080/job/Common/job/Create_application_terraform_poc_test/api/json?tree=builds[id,result,fullDisplayName,building,actions[parameters[name,value]]]", nil)
-	req.Header.Add("Authorization", "Basic "+ os.Getenv("Jenkins64base"))
-	res, err := client.Do(req)
-	if err != nil {
-		panic(err.Error())
-	}
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		panic(err.Error())
-	}
-	json.Unmarshal(body, &jobs)
+
+	json.Unmarshal(getHTTPBody("http://jenkins.paas.sbtech.com:8080/job/Common/job/Create_application_terraform_poc_test/api/json?tree=builds[url,building,actions[parameters[name,value]]]"), &jobs)
 	for _, val := range jobs.Builds {
 		if val.Building {
-			for _, u := range val.Actions[0].Parameters {
-				if u.Name == "env_name" {
-					if !stringInSlice(u.Value, list) {
-						list = append(list, u.Value)
+			for i := range val.Actions[0].Parameters {
+				if val.Actions[0].Parameters[i].Name == "application" {
+					for y := range val.Actions[0].Parameters {
+						if val.Actions[0].Parameters[y].Name == "env_name" {
+							list = append(list, (val.Actions[0].Parameters[y].Value + ";" + val.Actions[0].Parameters[i].Value + ";" + val.Url))
+							break
+						}
 					}
 				}
 			}
@@ -250,6 +254,76 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+}
+
+func JenkinsJobs(w http.ResponseWriter, r *http.Request) {
+	var appterrpoc AppTerraformPOC
+	var buildartpop BuilsArtifacrtPOP
+	var cloudenvpoc CloudEnvPOC
+	var list []JenkinsJob
+
+	json.Unmarshal(getHTTPBody("http://jenkins.paas.sbtech.com:8080/job/Common/job/Create_application_terraform_poc_test/api/json?tree=builds[displayName,result,url,building,timestamp,actions[causes[upstreamUrl,upstreamBuild]]]"), &appterrpoc)
+	for _, val := range appterrpoc.Builds {
+		joburl := ""
+		jobid := ""
+		jobUserName := ""
+		for i := range val.Actions {
+			if val.Actions[i].Class == "hudson.model.CauseAction" {
+				if val.Actions[i].Causes[0].Class == "hudson.model.Cause$UpstreamCause" {
+					joburl = val.Actions[i].Causes[0].UpstreamURL
+					jobid = strconv.Itoa(val.Actions[i].Causes[0].UpstreamBuild)
+					break
+				}
+			}
+		}
+		json.Unmarshal(getHTTPBody("http://jenkins.paas.sbtech.com:8080/"+joburl+jobid+"/api/json?tree=actions[causes[upstreamUrl,upstreamBuild]]"), &buildartpop)
+		for i := range buildartpop.Actions {
+			if buildartpop.Actions[i].Class == "hudson.model.CauseAction" {
+				if buildartpop.Actions[i].Causes[0].Class == "hudson.model.Cause$UpstreamCause" {
+					joburl = buildartpop.Actions[i].Causes[0].UpstreamURL
+					jobid = strconv.Itoa(buildartpop.Actions[i].Causes[0].UpstreamBuild)
+					break
+				}
+			}
+		}
+		json.Unmarshal(getHTTPBody("http://jenkins.paas.sbtech.com:8080/"+joburl+jobid+"/api/json?tree=actions[causes[userName]]"), &cloudenvpoc)
+		for i := range cloudenvpoc.Actions {
+
+			if cloudenvpoc.Actions[i].Class == "hudson.model.CauseAction" {
+				if cloudenvpoc.Actions[i].Causes[0].Class == "hudson.model.Cause$UserIdCause" {
+					jobUserName = cloudenvpoc.Actions[i].Causes[0].UserName
+					break
+				}
+			}
+		}
+		list = append(list, JenkinsJob{Timestamp: time.Unix(val.Timestamp/1000, 0).Format("15:04"),
+			Building: val.Building,
+			Result: val.Result,
+			DisplayName: val.DisplayName,
+			URL: val.URL,
+			UserName: jobUserName})
+	}
+	allowCORS(w)
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(list); err != nil {
+		panic(err)
+	}
+}
+
+func getHTTPBody(url string) []byte {
+	var client http.Client
+
+	req, err := http.NewRequest("GET", url, nil)
+	req.Header.Add("Authorization", "Basic "+os.Getenv("Jenkins64base"))
+	res, err := client.Do(req)
+	if err != nil {
+		panic(err.Error())
+	}
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		panic(err.Error())
+	}
+	return body
 }
 
 func allowCORS(w http.ResponseWriter) {
