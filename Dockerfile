@@ -1,4 +1,4 @@
-FROM golang:1.8
+FROM golang:1.21.6
 WORKDIR /app
 ENV MYSQL_CONNECTION=user:password@tcp(sonar.paas.sbtech.com:3306)/build?charset=utf8
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/gc_cloud.json
